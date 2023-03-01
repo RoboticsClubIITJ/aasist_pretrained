@@ -15,6 +15,7 @@ from importlib import import_module
 from pathlib import Path
 from shutil import copy
 from typing import Dict, List, Union
+import random
 
 import torch
 import torch.nn as nn
@@ -225,32 +226,57 @@ def get_loader(
         seed: int,
         config: dict) -> List[torch.utils.data.DataLoader]:
     """Make PyTorch DataLoaders for train / developement / evaluation"""
-    track = config["track"]
-    prefix_2019 = "ASVspoof2019.{}".format(track)
+    # track = config["track"]
+    # prefix_2019 = "ASVspoof2019.{}".format(track)
 
-    trn_database_path = database_path / "ASVspoof2019_{}_train/".format(track)
-    dev_database_path = database_path / "ASVspoof2019_{}_dev/".format(track)
-    eval_database_path = database_path / "ASVspoof2019_{}_eval/".format(track)
+    # trn_database_path = database_path / "ASVspoof2019_{}_train/".format(track)
+    # dev_database_path = database_path / "ASVspoof2019_{}_dev/".format(track)
+    # eval_database_path = database_path / "ASVspoof2019_{}_eval/".format(track)
 
-    trn_list_path = (database_path /
-                     "ASVspoof2019_{}_cm_protocols/{}.cm.train.trn.txt".format(
-                         track, prefix_2019))
-    dev_trial_path = (database_path /
-                      "ASVspoof2019_{}_cm_protocols/{}.cm.dev.trl.txt".format(
-                          track, prefix_2019))
-    eval_trial_path = (
-        database_path /
-        "ASVspoof2019_{}_cm_protocols/{}.cm.eval.trl.txt".format(
-            track, prefix_2019))
+    # trn_list_path = (database_path /
+    #                  "ASVspoof2019_{}_cm_protocols/{}.cm.train.trn.txt".format(
+    #                      track, prefix_2019))
+    # dev_trial_path = (database_path /
+    #                   "ASVspoof2019_{}_cm_protocols/{}.cm.dev.trl.txt".format(
+    #                       track, prefix_2019))
+    # eval_trial_path = (
+    #     database_path /
+    #     "ASVspoof2019_{}_cm_protocols/{}.cm.eval.trl.txt".format(
+    #         track, prefix_2019))
 
-    d_label_trn, file_train = genSpoof_list(dir_meta=trn_list_path,
-                                            is_train=True,
-                                            is_eval=False)
+    # d_label_trn, file_train = genSpoof_list(dir_meta=trn_list_path,
+    #                                         is_train=True,
+    #                                         is_eval=False)
+
+    database_path = r"C:\Users\pawan\Downloads\DAI\A1\q3\aasist\LA2\train"
+
+    files_real = os.listdir(r"C:\Users\pawan\Downloads\DAI\A1\q3\Recorded\English\converted")
+    files_fake = os.listdir(r"C:\Users\pawan\Downloads\DAI\A1\q3\Generated\English\converted")
+
+    n_real = len(files_real)
+    n_fake = len(files_fake)
+
+    files_real_train = files_real[:int(n_real*0.7)]
+    files_fake_train = files_fake[:int(n_fake*0.7)]
+    files_real_dev = files_real[int(n_real*0.7): int(n_real*0.9)]
+    files_fake_dev = files_fake[int(n_real*0.7):int(n_fake*0.9)]
+    files_real_eval = files_real[int(n_real*0.9):]
+    files_fake_eval = files_fake[int(n_fake*0.9):]
+
+    d_label_trn = {}
+
+    for file in files_real_train:
+        d_label_trn[file] = 1
+    for file in files_fake_train:
+        d_label_trn[file] = 0
+    
+    file_train = files_real_train + files_fake_train
+    
     print("no. training files:", len(file_train))
 
     train_set = Dataset_ASVspoof2019_train(list_IDs=file_train,
                                            labels=d_label_trn,
-                                           base_dir=trn_database_path)
+                                           base_dir=database_path)
     gen = torch.Generator()
     gen.manual_seed(seed)
     trn_loader = DataLoader(train_set,
@@ -260,25 +286,29 @@ def get_loader(
                             pin_memory=True,
                             worker_init_fn=seed_worker,
                             generator=gen)
+    
+    file_dev = files_real_dev + files_fake_dev
 
-    _, file_dev = genSpoof_list(dir_meta=dev_trial_path,
-                                is_train=False,
-                                is_eval=False)
+    # _, file_dev = genSpoof_list(dir_meta=dev_trial_path,
+    #                             is_train=False,
+    #                             is_eval=False)
     print("no. validation files:", len(file_dev))
 
     dev_set = Dataset_ASVspoof2019_devNeval(list_IDs=file_dev,
-                                            base_dir=dev_database_path)
+                                            base_dir=database_path)
     dev_loader = DataLoader(dev_set,
                             batch_size=config["batch_size"],
                             shuffle=False,
                             drop_last=False,
                             pin_memory=True)
 
-    file_eval = genSpoof_list(dir_meta=eval_trial_path,
-                              is_train=False,
-                              is_eval=True)
+    file_eval = files_real_eval + files_fake_eval
+
+    # file_eval = genSpoof_list(dir_meta=eval_trial_path,
+    #                           is_train=False,
+    #                           is_eval=True)
     eval_set = Dataset_ASVspoof2019_devNeval(list_IDs=file_eval,
-                                             base_dir=eval_database_path)
+                                             base_dir=database_path)
     eval_loader = DataLoader(eval_set,
                              batch_size=config["batch_size"],
                              shuffle=False,
