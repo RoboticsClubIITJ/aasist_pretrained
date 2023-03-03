@@ -73,7 +73,14 @@ class Dataset_ASVspoof2019_train(Dataset):
 
     def __getitem__(self, index):
         key = self.list_IDs[index]
-        X, _ = sf.read(str(self.base_dir + f"/{key}"))
+
+        file_path = ""
+        if self.labels[key]==1:
+          file_path = self.base_dir + f"/Recorded/new/converted/{key}"
+        else:
+          file_path = self.base_dir + f"/Generated/English/converted/{key}"
+
+        X, _ = sf.read(str(file_path))
         #X, _ = sf.read(str(self.base_dir / f"flac/{key}.flac"))
         X_pad = pad_random(X, self.cut)
         x_inp = Tensor(X_pad)

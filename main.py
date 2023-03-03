@@ -248,10 +248,10 @@ def get_loader(
     #                                         is_train=True,
     #                                         is_eval=False)
 
-    database_path = r"C:\Users\pawan\Downloads\DAI\A1\q3\aasist\LA2\train"
+    database_path = r"/content/drive/MyDrive/q3"
 
-    files_real = os.listdir(r"C:\Users\pawan\Downloads\DAI\A1\q3\Recorded\English\converted")
-    files_fake = os.listdir(r"C:\Users\pawan\Downloads\DAI\A1\q3\Generated\English\converted")
+    files_real = os.listdir(r"/content/drive/MyDrive/q3/Recorded/new/converted")
+    files_fake = os.listdir(r"/content/drive/MyDrive/q3/Generated/English/converted")
 
     n_real = len(files_real)
     n_fake = len(files_fake)
