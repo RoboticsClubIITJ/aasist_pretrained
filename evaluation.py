@@ -3,6 +3,20 @@ import os
 
 import numpy as np
 
+def calculate_eer_acc(cm_scores_file,
+                       output_file,
+                       printout=True):
+    cm_data = np.genfromtxt(cm_scores_file, dtype=str)
+    cm_keys = cm_data[:, 0]
+    cm_scores = cm_data[:, 1].astype(np.float)
+
+    fp = []
+    fn = []
+    
+
+    for t in range(0, 1.1, 0.1):
+        
+        pass
 
 def calculate_tDCF_EER(cm_scores_file,
                        asv_score_file,
