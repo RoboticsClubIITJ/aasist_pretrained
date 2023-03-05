@@ -89,7 +89,7 @@ class Dataset_ASVspoof2019_train(Dataset):
 
 
 class Dataset_ASVspoof2019_devNeval(Dataset):
-    def __init__(self, list_IDs, base_dir):
+    def __init__(self, list_IDs, labels, base_dir):
         """self.list_IDs	: list of strings (each string: utt key),
         """
         self.list_IDs = list_IDs
@@ -101,7 +101,12 @@ class Dataset_ASVspoof2019_devNeval(Dataset):
 
     def __getitem__(self, index):
         key = self.list_IDs[index]
-        X, _ = sf.read(str(self.base_dir / f"flac/{key}.flac"))
+        file_path = ""
+        if self.labels[key]==1:
+          file_path = self.base_dir + f"/Recorded/new/converted/{key}"
+        else:
+          file_path = self.base_dir + f"/Generated/English/converted/{key}"
+        X, _ = sf.read(str(file_path))
         X_pad = pad(X, self.cut)
         x_inp = Tensor(X_pad)
         return x_inp, key

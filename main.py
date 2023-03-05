@@ -224,14 +224,19 @@ def get_loader(
                             worker_init_fn=seed_worker,
                             generator=gen)
     
+    
+    d_label_dev = {}
+
+    for file in files_real_dev:
+        d_label_dev[file] = 1
+    for file in files_fake_dev:
+        d_label_dev[file] = 0
     file_dev = files_real_dev + files_fake_dev
 
-    # _, file_dev = genSpoof_list(dir_meta=dev_trial_path,
-    #                             is_train=False,
-    #                             is_eval=False)
     print("no. validation files:", len(file_dev))
 
     dev_set = Dataset_ASVspoof2019_devNeval(list_IDs=file_dev,
+                                            labels=d_label_dev,
                                             base_dir=database_path)
     dev_loader = DataLoader(dev_set,
                             batch_size=config["batch_size"],
@@ -239,12 +244,17 @@ def get_loader(
                             drop_last=False,
                             pin_memory=True)
 
+    d_label_eval = {}
+
+    for file in files_real_eval:
+        d_label_eval[file] = 1
+    for file in files_fake_eval:
+        d_label_eval[file] = 0
+    
     file_eval = files_real_eval + files_fake_eval
 
-    # file_eval = genSpoof_list(dir_meta=eval_trial_path,
-    #                           is_train=False,
-    #                           is_eval=True)
     eval_set = Dataset_ASVspoof2019_devNeval(list_IDs=file_eval,
+                                             labels=d_label_eval,
                                              base_dir=database_path)
     eval_loader = DataLoader(eval_set,
                              batch_size=config["batch_size"],
