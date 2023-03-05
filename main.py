@@ -94,17 +94,9 @@ def main(args: argparse.Namespace) -> None:
     trn_loader, dev_loader, eval_loader = get_loader(
         database_path, args.seed, config)
 
-    # evaluates pretrained model and exit script
-    if args.eval:
-        model.load_state_dict(
+    model.load_state_dict(
             torch.load(config["model_path"], map_location=device))
-        print("Model loaded : {}".format(config["model_path"]))
-        print("Start evaluation...")
-        produce_evaluation_file(eval_loader, model, device,
-                                eval_score_path, eval_trial_path)
-        calculate_eer_acc(cm_scores_file=eval_score_path)
-        print("DONE.")
-        sys.exit(0)
+    print("Model loaded : {}".format(config["model_path"]))
 
     # get optimizer and scheduler
     optim_config["steps_per_epoch"] = len(trn_loader)
