@@ -93,6 +93,7 @@ class Dataset_ASVspoof2019_devNeval(Dataset):
         """self.list_IDs	: list of strings (each string: utt key),
         """
         self.list_IDs = list_IDs
+        self.labels = labels
         self.base_dir = base_dir
         self.cut = 64600  # take ~4 sec audio (64600 samples)
 
@@ -109,4 +110,4 @@ class Dataset_ASVspoof2019_devNeval(Dataset):
         X, _ = sf.read(str(file_path))
         X_pad = pad(X, self.cut)
         x_inp = Tensor(X_pad)
-        return x_inp, key
+        return x_inp, self.labels[key], key

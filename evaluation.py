@@ -4,19 +4,35 @@ import os
 import numpy as np
 
 def calculate_eer_acc(cm_scores_file,
-                       output_file,
                        printout=True):
     cm_data = np.genfromtxt(cm_scores_file, dtype=str)
-    cm_keys = cm_data[:, 0]
-    cm_scores = cm_data[:, 1].astype(np.float)
+    file_names = cm_data[:, 0]
+    true_labels = cm_data[:, 1]
+    scores = cm_data[:, 2].astype(np.float)
 
-    fp = []
-    fn = []
+    fp_list = []
+    fn_list = []
+    temp = 10
+    eer = 1
+
+    for t in range(0, 1.05, 0.05):
+        predicted_labels = np.where(scores >= t, 1, 0)
+        fp = sum((predicted_labels == 1) & (true_labels == 0))
+        fn = sum((predicted_labels == 0) & (true_labels == 1))
+        fp_list.append(fp)
+        fn_list.append(fn)
+        temp2 = abs(fp-fn)
+        if temp2 < temp:
+            temp2 = temp
+            eer = t
     
+    predicted_labels = np.where(scores >= eer, 1, 0)
 
-    for t in range(0, 1.1, 0.1):
-        
-        pass
+    acc = sum(predicted_labels == true_labels) / len(true_labels)
+
+    print(f"Accuracy = {acc}, EER = {eer}")
+
+    return acc, eer
 
 def calculate_tDCF_EER(cm_scores_file,
                        asv_score_file,

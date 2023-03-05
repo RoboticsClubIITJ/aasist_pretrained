@@ -23,9 +23,11 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchcontrib.optim import SWA
 
+from sklearn.preprocessing import MinMaxScaler
+
 from data_utils import (Dataset_ASVspoof2019_train,
                         Dataset_ASVspoof2019_devNeval, genSpoof_list)
-from evaluation import calculate_tDCF_EER
+from evaluation import calculate_eer_acc
 from utils import create_optimizer, seed_worker, set_seed, str_to_bool
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -99,15 +101,8 @@ def main(args: argparse.Namespace) -> None:
         print("Start evaluation...")
         produce_evaluation_file(eval_loader, model, device,
                                 eval_score_path, eval_trial_path)
-        calculate_tDCF_EER(cm_scores_file=eval_score_path,
-                           asv_score_file=database_path /
-                           config["asv_score_path"],
-                           output_file=model_tag / "t-DCF_EER.txt")
+        calculate_eer_acc(cm_scores_file=eval_score_path)
         print("DONE.")
-        eval_eer, eval_tdcf = calculate_tDCF_EER(
-            cm_scores_file=eval_score_path,
-            asv_score_file=database_path / config["asv_score_path"],
-            output_file=model_tag/"loaded_model_t-DCF_EER.txt")
         sys.exit(0)
 
     # get optimizer and scheduler
@@ -134,7 +129,7 @@ def main(args: argparse.Namespace) -> None:
                                    scheduler, config)
         produce_evaluation_file(dev_loader, model, device,
                                 metric_path/"dev_score.txt", dev_trial_path)
-
+        calculate_eer_acc(cm_scores_file=eval_score_path)
         print("DONE.\nLoss:{:.5f},".format(
             running_loss))
         writer.add_scalar("loss", running_loss, epoch)
@@ -146,27 +141,14 @@ def main(args: argparse.Namespace) -> None:
         optimizer_swa.bn_update(trn_loader, model, device=device)
     produce_evaluation_file(eval_loader, model, device, eval_score_path,
                             eval_trial_path)
-    eval_eer, eval_tdcf = calculate_tDCF_EER(cm_scores_file=eval_score_path,
-                                             asv_score_file=database_path /
-                                             config["asv_score_path"],
-                                             output_file=model_tag / "t-DCF_EER.txt")
+    acc, eer = calculate_eer_acc(cm_scores_file=eval_score_path)
     f_log = open(model_tag / "metric_log.txt", "a")
     f_log.write("=" * 5 + "\n")
-    f_log.write("EER: {:.3f}, min t-DCF: {:.5f}".format(eval_eer, eval_tdcf))
+    f_log.write("EER: {:.3f}, acc: {:.5f}".format(eer, acc))
     f_log.close()
 
     torch.save(model.state_dict(),
                model_save_path / "swa.pth")
-
-    if eval_eer <= best_eval_eer:
-        best_eval_eer = eval_eer
-    if eval_tdcf <= best_eval_tdcf:
-        best_eval_tdcf = eval_tdcf
-        torch.save(model.state_dict(),
-                   model_save_path / "best.pth")
-    print("Exp FIN. EER: {:.3f}, min t-DCF: {:.5f}".format(
-        best_eval_eer, best_eval_tdcf))
-
 
 def get_model(model_config: Dict, device: torch.device):
     """Define DNN model architecture"""
@@ -187,8 +169,8 @@ def get_loader(
 
     database_path = r"/content/drive/MyDrive/q3"
 
-    files_real = os.listdir(r"/content/drive/MyDrive/q3/Recorded/new/converted")
-    files_fake = os.listdir(r"/content/drive/MyDrive/q3/Generated/English/converted")
+    files_real = os.listdir(r"/content/drive/MyDrive/q3/Recorded/new/converted")[:25]
+    files_fake = os.listdir(r"/content/drive/MyDrive/q3/Generated/English/converted")[:25]
 
     n_real = len(files_real)
     n_fake = len(files_fake)
@@ -277,21 +259,27 @@ def produce_evaluation_file(
     #     trial_lines = f_trl.readlines()
     fname_list = []
     score_list = []
-    for batch_x, utt_id in data_loader:
+    y_list = []
+    for batch_x, batch_y, utt_id in data_loader:
         batch_x = batch_x.to(device)
         with torch.no_grad():
             _, batch_out = model(batch_x)
             batch_score = (batch_out[:, 1]).data.cpu().numpy().ravel()
         # add outputs
         fname_list.extend(utt_id)
+        y_list.extend(batch_y)
         score_list.extend(batch_score.tolist())
+
+    scaler = MinMaxScaler()
+    normalized_values = scaler.fit_transform([score_list])
+    score_list = normalized_values.tolist()[0]
 
     # assert len(trial_lines) == len(fname_list) == len(score_list)
     with open(save_path, "w") as fh:
-        for fn, sco in zip(fname_list, score_list):
+        for fn, y, sco in zip(fname_list, y_list, score_list):
             # _, utt_id, _, src, key = trl.strip().split(' ')
             # assert fn == utt_id
-            fh.write("{} {}\n".format(fn, sco))
+            fh.write("{} {} {}\n".format(fn, y, sco))
     print("Scores saved to {}".format(save_path))
 
 
