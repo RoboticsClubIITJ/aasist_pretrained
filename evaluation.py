@@ -15,7 +15,8 @@ def calculate_eer_acc(cm_scores_file,
     temp = 10
     eer = 1
 
-    for t in range(0, 1.05, 0.05):
+    for i in range(0, 21, 1):
+        t = i / 20
         predicted_labels = np.where(scores >= t, 1, 0)
         fp = sum((predicted_labels == 1) & (true_labels == 0))
         fn = sum((predicted_labels == 0) & (true_labels == 1))
@@ -28,7 +29,7 @@ def calculate_eer_acc(cm_scores_file,
     
     predicted_labels = np.where(scores >= eer, 1, 0)
 
-    acc = sum(predicted_labels == true_labels) / len(true_labels)
+    acc = 1 - (sum((predicted_labels + true_labels) == 1) / len(true_labels))
 
     print(f"Accuracy = {acc}, EER = {eer}")
 
