@@ -7,7 +7,7 @@ def calculate_eer_acc(cm_scores_file,
                        printout=True):
     cm_data = np.genfromtxt(cm_scores_file, dtype=str)
     file_names = cm_data[:, 0]
-    true_labels = cm_data[:, 1]
+    true_labels = cm_data[:, 1].astype(np.int)
     scores = cm_data[:, 2].astype(np.float)
 
     fp_list = []
@@ -29,7 +29,7 @@ def calculate_eer_acc(cm_scores_file,
     
     predicted_labels = np.where(scores >= eer, 1, 0)
 
-    acc = 1 - (sum((predicted_labels + true_labels) == 1) / len(true_labels))
+    acc = sum(predicted_labels == true_labels) / len(true_labels)
 
     print(f"Accuracy = {acc}, EER = {eer}")
 

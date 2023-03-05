@@ -169,8 +169,8 @@ def get_loader(
 
     database_path = r"/content/drive/MyDrive/q3"
 
-    files_real = os.listdir(r"/content/drive/MyDrive/q3/Recorded/new/converted")[:25]
-    files_fake = os.listdir(r"/content/drive/MyDrive/q3/Generated/English/converted")[:25]
+    files_real = os.listdir(r"/content/drive/MyDrive/q3/Recorded/new/converted")
+    files_fake = os.listdir(r"/content/drive/MyDrive/q3/Generated/English/converted")
 
     n_real = len(files_real)
     n_fake = len(files_fake)
