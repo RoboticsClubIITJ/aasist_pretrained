@@ -24,7 +24,7 @@ def calculate_eer_acc(cm_scores_file,
         fn_list.append(fn)
         temp2 = abs(fp-fn)
         if temp2 < temp:
-            temp2 = temp
+            temp = temp2
             eer = t
     
     predicted_labels = np.where(scores >= eer, 1, 0)

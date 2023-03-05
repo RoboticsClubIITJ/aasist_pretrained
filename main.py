@@ -16,6 +16,7 @@ from pathlib import Path
 from shutil import copy
 from typing import Dict, List, Union
 import random
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -270,16 +271,16 @@ def produce_evaluation_file(
         y_list.extend(batch_y)
         score_list.extend(batch_score.tolist())
 
-    scaler = MinMaxScaler()
-    normalized_values = scaler.fit_transform([score_list])
-    score_list = normalized_values.tolist()[0]
+    v_min = np.min(score_list)
+    v_range = np.max(score_list) - v_min
+    normalized_values = (score_list - v_min) / v_range
 
     # assert len(trial_lines) == len(fname_list) == len(score_list)
     with open(save_path, "w") as fh:
-        for fn, y, sco in zip(fname_list, y_list, score_list):
+        for fn, y, no, sco in zip(fname_list, y_list, normalized_values, score_list):
             # _, utt_id, _, src, key = trl.strip().split(' ')
             # assert fn == utt_id
-            fh.write("{} {} {}\n".format(fn, y, sco))
+            fh.write("{} {} {} {}\n".format(fn, y, no, sco))
     print("Scores saved to {}".format(save_path))
 
 
