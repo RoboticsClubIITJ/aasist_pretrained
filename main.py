@@ -129,7 +129,7 @@ def main(args: argparse.Namespace) -> None:
                                    scheduler, config)
         produce_evaluation_file(dev_loader, model, device,
                                 metric_path/"dev_score.txt", dev_trial_path)
-        calculate_eer_acc(cm_scores_file=eval_score_path)
+        calculate_eer_acc(cm_scores_file=metric_path/"dev_score.txt")
         print("DONE.\nLoss:{:.5f},".format(
             running_loss))
         writer.add_scalar("loss", running_loss, epoch)
